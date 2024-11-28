@@ -3,16 +3,17 @@
 set -e
 
 VERBOSE=false
-RESOLUTION=300
+FONT_SIZE=18  # Default font size
 
+# Parse command-line arguments
 while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do
     case $1 in
         -v)
             VERBOSE=true
             ;;
-        -r)
+        -s)
             shift
-            RESOLUTION=$1
+            FONT_SIZE=$1
             ;;
     esac
     shift
@@ -23,9 +24,12 @@ if [[ "$1" == '--' ]]; then shift; fi
 LATEX_EXPRESSION=$1
 
 if [ -z "$LATEX_EXPRESSION" ]; then
-    echo "Usage: $0 [-v] [-r resolution] \"LaTeX expression\""
+    echo "Usage: $0 [-v] [-s font_size] \"LaTeX expression\""
     exit 1
 fi
+
+# Escape LaTeX expression for URL encoding
+LATEX_EXPRESSION_ENCODED=$(echo "$LATEX_EXPRESSION" | sed 's/ /+/g' | sed 's/\\/\\\\/g')
 
 # Create a temporary file that will be automatically cleaned up on exit
 IMAGE_FILENAME=$(mktemp /tmp/latex_image.XXXXXX)
@@ -38,30 +42,30 @@ cleanup() {
 }
 trap cleanup EXIT
 
-PAYLOAD=$(jq -n --arg latex "$LATEX_EXPRESSION" --argjson resolution "$RESOLUTION" \
-    '{
-        "auth": {"user": "guest", "password": "guest"},
-        "latex": $latex,
-        "resolution": $resolution,
-        "color": "000000"
-    }')
+# Construct the POST data
+POST_DATA="eq_latex=${LATEX_EXPRESSION}&eq_forecolor=Black&eq_bkcolor=White&eq_font_family=modern&eq_font=${FONT_SIZE}&eq_imformat=JPG"
 
-RESPONSE=$(curl -sSf 'http://latex2png.com/api/convert' \
-  --header "Content-Type: application/json" \
-  --data-binary "$PAYLOAD")
+# Make the POST request
+RESPONSE=$(curl -s 'https://www.sciweavers.org/process_form_tex2img' \
+  --data-raw "$POST_DATA")
 
-IMAGE_PATH=$(echo $RESPONSE | jq -r '.url')
-FULL_URL="http://latex2png.com$IMAGE_PATH"
+IMAGE_ID=$(echo "$RESPONSE" | awk -F"upload/Tex2Img_" '{print $2}' | awk -F"/" '{print $1}')
+IMAGE_ID=$(echo $IMAGE_ID | xargs echo -n)
+if [ -z "$IMAGE_ID" ]; then
+    echo "Failed to extract the image ID."
+    exit 1
+fi
 
-curl -sSf -o $IMAGE_FILENAME $FULL_URL
+IMAGE_URL="https://www.sciweavers.org/upload/Tex2Img_"$IMAGE_ID"/render.png"
+curl -sSf -o "$IMAGE_FILENAME" "$IMAGE_URL"
 
 if [ -f "$IMAGE_FILENAME" ]; then
     if $VERBOSE; then
         echo "Image downloaded successfully: $IMAGE_FILENAME"
     fi
-    echo $FULL_URL | pbcopy
+    echo "$IMAGE_URL" | pbcopy
     if $VERBOSE; then
-        echo "Image URL copied to clipboard: $FULL_URL"
+        echo "Image URL copied to clipboard: $IMAGE_URL"
     fi
     
     osascript_output=$(osascript -e 'set the clipboard to (read (POSIX file "'$IMAGE_FILENAME'") as JPEG picture)' 2>&1)

@@ -3,9 +3,8 @@
 set -e
 
 VERBOSE=false
-RESOLUTION=300  # Default resolution
+RESOLUTION=300
 
-# Parse command-line arguments
 while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do
     case $1 in
         -v)

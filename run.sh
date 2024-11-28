@@ -2,19 +2,29 @@
 
 set -e
 
-set -e
-
 VERBOSE=false
+RESOLUTION=300  # Default resolution
 
-if [ "$1" == "-v" ]; then
-    VERBOSE=true
+# Parse command-line arguments
+while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do
+    case $1 in
+        -v)
+            VERBOSE=true
+            ;;
+        -r)
+            shift
+            RESOLUTION=$1
+            ;;
+    esac
     shift
-fi
+done
+
+if [[ "$1" == '--' ]]; then shift; fi
 
 LATEX_EXPRESSION=$1
 
 if [ -z "$LATEX_EXPRESSION" ]; then
-    echo "Usage: $0 [-v] \"LaTeX expression\""
+    echo "Usage: $0 [-v] [-r resolution] \"LaTeX expression\""
     exit 1
 fi
 
@@ -29,11 +39,11 @@ cleanup() {
 }
 trap cleanup EXIT
 
-PAYLOAD=$(jq -n --arg latex "$LATEX_EXPRESSION" \
+PAYLOAD=$(jq -n --arg latex "$LATEX_EXPRESSION" --argjson resolution "$RESOLUTION" \
     '{
         "auth": {"user": "guest", "password": "guest"},
         "latex": $latex,
-        "resolution": 600,
+        "resolution": $resolution,
         "color": "000000"
     }')
 

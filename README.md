@@ -11,12 +11,13 @@ Ensure the following tools are installed:
 - `pbcopy` (macOS)
 - `osascript` (macOS)
 
-## Installation
-
-Make the script executable:
-
+## Usage
+```
+Usage: ./run.sh [-v] [-r resolution] "LaTeX expression"
+```
+Or use the oneliner without cloning
 ```bash
-curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/detrin/latex-in-terminal/refs/heads/main/run.sh | sh -s -- "E=mc^2"
+curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/detrin/latex-in-terminal/refs/heads/main/run.sh | sh -s -- -r 200 "E=mc^2"
 ```
 
 ## Notes

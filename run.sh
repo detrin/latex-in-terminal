@@ -28,10 +28,6 @@ if [ -z "$LATEX_EXPRESSION" ]; then
     exit 1
 fi
 
-# Escape LaTeX expression for URL encoding
-LATEX_EXPRESSION_ENCODED=$(echo "$LATEX_EXPRESSION" | sed 's/ /+/g' | sed 's/\\/\\\\/g')
-
-# Create a temporary file that will be automatically cleaned up on exit
 IMAGE_FILENAME=$(mktemp /tmp/latex_image.XXXXXX)
 
 cleanup() {
@@ -42,12 +38,13 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# Construct the POST data
-POST_DATA="eq_latex=${LATEX_EXPRESSION}&eq_forecolor=Black&eq_bkcolor=White&eq_font_family=modern&eq_font=${FONT_SIZE}&eq_imformat=JPG"
-
-# Make the POST request
 RESPONSE=$(curl -s 'https://www.sciweavers.org/process_form_tex2img' \
-  --data-raw "$POST_DATA")
+  --data-urlencode "eq_latex=${LATEX_EXPRESSION}" \
+  --data-urlencode "eq_forecolor=Black" \
+  --data-urlencode "eq_bkcolor=White" \
+  --data-urlencode "eq_font_family=modern" \
+  --data-urlencode "eq_font=${FONT_SIZE}" \
+  --data-urlencode "eq_imformat=JPG")
 
 IMAGE_ID=$(echo "$RESPONSE" | awk -F"upload/Tex2Img_" '{print $2}' | awk -F"/" '{print $1}')
 IMAGE_ID=$(echo $IMAGE_ID | xargs echo -n)

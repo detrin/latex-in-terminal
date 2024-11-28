@@ -16,7 +16,7 @@ Ensure the following tools are installed:
 Make the script executable:
 
 ```bash
-./run.sh -v "E=mc^2"
+curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/detrin/latex-in-terminal/refs/heads/main/run.sh | sh -s -- "E=mc^2"
 ```
 
 ## Notes

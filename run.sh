@@ -2,19 +2,21 @@
 
 set -e
 
-if [ "$#" -lt 1 ]; then
-    echo "Usage: $0 [-v] \"LaTeX expression\""
-    exit 1
-fi
+set -e
 
 VERBOSE=false
 
 if [ "$1" == "-v" ]; then
     VERBOSE=true
-    shift  # Shift the arguments to process the LaTeX expression next
+    shift
 fi
 
 LATEX_EXPRESSION=$1
+
+if [ -z "$LATEX_EXPRESSION" ]; then
+    echo "Usage: $0 [-v] \"LaTeX expression\""
+    exit 1
+fi
 
 # Create a temporary file that will be automatically cleaned up on exit
 IMAGE_FILENAME=$(mktemp /tmp/latex_image.XXXXXX)
